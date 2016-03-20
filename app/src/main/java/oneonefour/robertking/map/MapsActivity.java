@@ -48,9 +48,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         super.onStart();
     }
     @Override
-    protected void onStop() {
-        apiClient.disconnect();
+    protected void onStop(){
         LocationServices.FusedLocationApi.removeLocationUpdates(apiClient,this);
+        apiClient.disconnect();
         super.onStop();
     }
     public void setLocation(Location location) {
@@ -86,9 +86,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }else{
             positionMarker.setPosition(phonecation);
         }
-        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(phonecation,10.0f));
+        mMap.moveCamera(CameraUpdateFactory.newLatLngZoom(phonecation, 10.0f));
+        //add new location to database here.
     }
-
+    public void UpdateMap(){
+        //
+    }
     @Override
     public void onConnected(@Nullable Bundle bundle) {
         LocationRequest request = new LocationRequest();
