@@ -29,7 +29,6 @@ if(isset($_GET['name'], $_GET['newName'])){
     //required field is missing
     $response["success"]=0;
     $response["message"]="required field missing";
-    
     //echo JSON 
     echo json_encode($response);
 }
