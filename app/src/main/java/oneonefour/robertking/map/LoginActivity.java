@@ -1,6 +1,7 @@
 package oneonefour.robertking.map;
 
 import android.accounts.NetworkErrorException;
+import android.app.FragmentManager;
 import android.content.Intent;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
@@ -34,7 +35,7 @@ import java.util.Map;
 
 public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private SwipeRefreshLayout swipeList;
-    private Player me;
+    private static Player me;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -44,7 +45,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                //TODO Add a addPlayer activity that adds players to list view that they can use to play against.
+                new ChangeNameFragment().show(getFragmentManager(),"ChangeNameFrag");
             }
         });
         swipeList = (SwipeRefreshLayout) findViewById(R.id.swipeRefresh);
@@ -74,11 +75,23 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     }
 
     @Override
+    protected void onDestroy() {
+        Log.d("Destroy","Destroy the player from DB");
+        super.onDestroy();
+
+    }
+
+    @Override
     public boolean onCreateOptionsMenu(Menu menu){
         getMenuInflater().inflate(R.menu.menu_login, menu);
         return true;
     }
-
+    public static String getUsername(){
+        return me.getName();
+    }
+    public static void setUsername(String name){
+        me.setName(name);
+    }
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
@@ -89,7 +102,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         return super.onOptionsItemSelected(item);
     }
     public void onPlayGame() {
-        Intent startGameIntent = new Intent(this,MapsActivity.class).addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK | Intent.FLAG_ACTIVITY_NEW_TASK);//clear backstack and start new task, do we want these for back button behaviour?
+        Intent startGameIntent = new Intent(this,MapsActivity.class);//clear backstack and start new task, do we want these for back button behaviour?
         //SEND DATA HERE
         //
         startGameIntent.putExtra("CurrentPlayerName",me.getName());

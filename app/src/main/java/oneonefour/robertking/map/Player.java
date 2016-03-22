@@ -24,6 +24,7 @@ public class Player {
     public String getName() {
         return name;
     }
+    public void setName(String name){this.name = name;}
     public void updateLocation(LatLng newlocation){
         pastLocations.add(location);
         this.location = newlocation;

@@ -30,7 +30,7 @@
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
         android:clickable="true"
-        android:src="@drawable/ic_add_white_24dp"
+        android:src="@drawable/ic_create_white_24dp"
         app:layout_anchor="@id/layout_View"
         app:layout_anchorGravity="bottom|right|end"
     />
