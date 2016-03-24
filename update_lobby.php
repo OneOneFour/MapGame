@@ -3,19 +3,18 @@
 $response = array();
 
 //check for required fields
-if(isset($_GET['name'], $_GET['newName'])){
+if(isset($_GET['lobbyID'])){
     //trim fields from HTTP GET, store in variables 
-    $name= trim($_GET['name']);
-    $newName= trim($_GET['newName']);
+    $ID= trim($_GET['lobbyID']);
     
     //call db_connect class
     require 'db_connect.php';
     
 //IF statement for DML query, runs if successful 
-    if($update = $conn->query("UPDATE locations SET userName='$newName' WHERE userName='$name'")){
+    if($update = $conn->query("UPDATE lobby SET gameBegun = 1 WHERE lobbyID = 'lobbyID'")){
         //successfully updated 
         $response["success"]=1;
-        $response["message"]="name updated";
+        $response["message"]="gameBegun updated";
         //echo JSON
         echo json_encode($response);
     } else {
