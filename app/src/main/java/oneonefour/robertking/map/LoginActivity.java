@@ -69,7 +69,21 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         //Check whether lobby was created...
         final String findUrl = "http://86.149.141.247:8080/MapGame/get_lobbyID.php?name="+me.getName();
         JSONObject lobbyIDJson = RequestSingleton.getInstance(this).getJSONRequest(url);
-
+        int lobbyID = me.getLobbyId();
+        try {
+            lobbyID = Integer.parseInt(lobbyIDJson.getJSONObject("0").getString("lobbyID"));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+        me.setLobbyID(lobbyID);
+        me.setIsHost(true);
+        //
+        if(lobbyID != Integer.MAX_VALUE){
+            onJoinLobby();
+        }
+        else{
+            Toast.makeText(getApplicationContext(),"Lobby could not be created for some reason",Toast.LENGTH_LONG);
+        }
     }
     @Override
     protected void onDestroy() {
@@ -106,14 +120,14 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         return super.onOptionsItemSelected(item);
     }
     private void onJoinLobby() {
-
         Intent startGameIntent = new Intent(this,LobbyActivity.class);//clear backstack and start new task, do we want these for back button behaviour?
         //SEND DATA HERE
         //
         startGameIntent.putExtra("CurrentPlayerName",me.getName());
+        startGameIntent.putExtra("lobbyID",me.getLobbyId());
+        startGameIntent.putExtra("isHost",me.getIsHost());
         startActivity(startGameIntent);//
     }
-
     @Override
     public void onRefresh() {
         final String url = "http://86.149.141.247:8080/MapGame/get_all_locations.php";

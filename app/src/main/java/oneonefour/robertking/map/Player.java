@@ -14,15 +14,21 @@ public class Player {
     private LatLng location;
     private List<LatLng> pastLocations;
     private String name;
-    private boolean isMe;
+    private boolean isHost;
     private int lobbyId;
     public Player(LatLng location,String name){
         this.location = location;
         this.name = name;
         pastLocations = new ArrayList<LatLng>();
         lobbyId = Integer.MAX_VALUE;
+        isHost = false;
     }
-
+    public boolean getIsHost(){
+        return isHost;
+    }
+    public void setIsHost(boolean isHost){
+        this.isHost = isHost;
+    }
     public String getName() {
         return name;
     }
