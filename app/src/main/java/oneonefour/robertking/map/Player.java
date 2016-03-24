@@ -15,10 +15,12 @@ public class Player {
     private List<LatLng> pastLocations;
     private String name;
     private boolean isMe;
+    private int lobbyId;
     public Player(LatLng location,String name){
         this.location = location;
         this.name = name;
         pastLocations = new ArrayList<LatLng>();
+        lobbyId = Integer.MAX_VALUE;
     }
 
     public String getName() {
@@ -34,6 +36,12 @@ public class Player {
     }
     public LatLng getCurrentLocation(){
         return location;
+    }
+    public void setLobbyID(int id){
+        lobbyId = id;
+    }
+    public int getLobbyId(){
+        return lobbyId;
     }
 
 }

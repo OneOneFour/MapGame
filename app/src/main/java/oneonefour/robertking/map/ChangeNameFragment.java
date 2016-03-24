@@ -3,7 +3,9 @@ package oneonefour.robertking.map;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.DialogFragment;
+import android.content.Context;
 import android.content.DialogInterface;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -21,6 +23,7 @@ import com.android.volley.toolbox.StringRequest;
  */
 public class ChangeNameFragment extends DialogFragment implements Response.Listener<String> , Response.ErrorListener{
     private LoginActivity activity;
+    private String tempName;
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
         activity = (LoginActivity) getActivity();
@@ -35,8 +38,8 @@ public class ChangeNameFragment extends DialogFragment implements Response.Liste
                 //Change Username;
                 EditText et = (EditText) myView.findViewById(R.id.change_name_et);
                 if (!et.getText().toString().matches("")) {
-                    final String url = "http://86.149.141.247:8080/MapGame/update_name.php?name="+LoginActivity.getUsername()+ "&newName="+et.getText().toString();
-                    LoginActivity.setUsername(et.getText().toString());
+                    tempName = et.getText().toString();
+                    final String url = "http://86.149.141.247:8080/MapGame/update_name.php?name="+activity.getUsername()+ "&newName="+tempName;
                     StringRequest changeUserName = new StringRequest(Request.Method.GET, url,ChangeNameFragment.this,ChangeNameFragment.this);
                     RequestSingleton.getInstance(ChangeNameFragment.this.getActivity().getApplicationContext()).addToRequestQueue(changeUserName);
                 } else {
@@ -63,6 +66,11 @@ public class ChangeNameFragment extends DialogFragment implements Response.Liste
 
     @Override
     public void onResponse(String response) {
+        activity.setUsername(tempName);
+        SharedPreferences sharedPreferences = this.getActivity().getPreferences(Context.MODE_PRIVATE);
+        SharedPreferences.Editor edit = sharedPreferences.edit();
+        edit.putString(getString(R.string.preference_key_name), tempName);
+        edit.commit();
         Log.d("ChangeName", response);
         Toast.makeText(activity.getApplicationContext(),"Name Changed Succesfully",Toast.LENGTH_LONG).show();
     }

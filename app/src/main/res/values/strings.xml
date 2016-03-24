@@ -8,4 +8,7 @@
     <string name="play_buttontext">Play</string>
     <string name="empty_list_text">There is no-one who wants to play right now</string>
     <string name="new_user_name">New user name</string>
+    <string name="preference_key_name">oneonefour.robertking.map.username</string>
+    <string name="title_activity_lobby">LobbyActivity</string>
+    <string name="lobby_name">Lobby name</string>
 </resources>

@@ -6,6 +6,11 @@
         android:id="@+id/playbutton"
         android:title="@string/play_buttontext"
         android:orderInCategory="100"
-        app:showAsAction="always|withText"
+        app:showAsAction="ifRoom|withText"
         android:icon = "@drawable/ic_play_arrow_white_24dp" />
+    <item android:id="@+id/editPlayer"
+        android:title="Edit"
+        android:orderInCategory="90"
+        app:showAsAction="ifRoom|withText"
+        android:icon = "@drawable/ic_create_white_24dp"/>
 </menu>

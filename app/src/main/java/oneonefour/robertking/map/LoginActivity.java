@@ -2,7 +2,9 @@ package oneonefour.robertking.map;
 
 import android.accounts.NetworkErrorException;
 import android.app.FragmentManager;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -16,6 +18,7 @@ import android.widget.Button;
 import android.widget.ListAdapter;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.android.volley.AuthFailureError;
 import com.android.volley.Request;
@@ -25,6 +28,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 
 import org.json.JSONException;
@@ -39,46 +43,40 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        me = new Player(new LatLng(0,0),"userName");
+        SharedPreferences saveData = getPreferences(Context.MODE_PRIVATE);
+        String name = saveData.getString(getString(R.string.preference_key_name),"userName");
+        me = new Player(new LatLng(0,0),name);
         setContentView(R.layout.activity_login);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                new ChangeNameFragment().show(getFragmentManager(),"ChangeNameFrag");
+                createLobby();
             }
         });
         swipeList = (SwipeRefreshLayout) findViewById(R.id.swipeRefresh);
 
         swipeList.setOnRefreshListener(this);
     }
-    //TODO move this to a static parsing class
 
     @Override
     protected void onStart() {
         super.onStart();
-        RequestSingleton.getInstance(this).getRequestQueue().start();
-        final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name=" +  me.getName() + "&latitude=" + me.getCurrentLocation().latitude +"&longitude=" + me.getCurrentLocation().longitude;
-        StringRequest addPlayer = new StringRequest(Request.Method.GET,url,new Response.Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d("LogAct",response);
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("LogAct", error.getMessage() + "JEU");
-            }
-        });
-        RequestSingleton.getInstance(this).addToRequestQueue(addPlayer);
+    }
+    private void createLobby(){
+        final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName();
+        RequestSingleton.getInstance(this).stringRequest(url);
+        //Check whether lobby was created...
+        final String findUrl = "http://86.149.141.247:8080/MapGame/get_lobbyID.php?name="+me.getName();
+        JSONObject lobbyIDJson = RequestSingleton.getInstance(this).getJSONRequest(url);
 
     }
-
     @Override
     protected void onDestroy() {
-        Log.d("Destroy","Destroy the player from DB");
+        Log.d("Destroy", "Destroy the player from DB");
+        final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name="+me.getName();
+        RequestSingleton.getInstance(this).stringRequest(url);
         super.onDestroy();
-
     }
 
     @Override
@@ -86,23 +84,30 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         getMenuInflater().inflate(R.menu.menu_login, menu);
         return true;
     }
-    public static String getUsername(){
+    public String getUsername(){
         return me.getName();
     }
-    public static void setUsername(String name){
+    public  void  setUsername(String name){
         me.setName(name);
+    }
+    public void setLobbyID(int lobbyID){
+        me.setLobbyID(lobbyID);
     }
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
         if(id == R.id.playbutton){
-            onPlayGame();
+            return true;
+        }
+        if(id == R.id.editPlayer){
+            new ChangeNameFragment().show(getFragmentManager(),"Change Name");
             return true;
         }
         return super.onOptionsItemSelected(item);
     }
-    public void onPlayGame() {
-        Intent startGameIntent = new Intent(this,MapsActivity.class);//clear backstack and start new task, do we want these for back button behaviour?
+    private void onJoinLobby() {
+
+        Intent startGameIntent = new Intent(this,LobbyActivity.class);//clear backstack and start new task, do we want these for back button behaviour?
         //SEND DATA HERE
         //
         startGameIntent.putExtra("CurrentPlayerName",me.getName());
@@ -111,28 +116,13 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
 
     @Override
     public void onRefresh() {
-
-        JsonObjectRequest players = new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                try {
-                    addDataToView(response);
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        }, new Response.ErrorListener() {
-            @Override
-            public void onErrorResponse(VolleyError error) {
-                Log.e("LoginActivity","Something went wrong, along the lines of " + error.getMessage());
-                swipeList.setRefreshing(false);
-            }
-        });
-        RequestSingleton.getInstance(this).addToRequestQueue(players);
-
-
+        final String url = "http://86.149.141.247:8080/MapGame/get_all_locations.php";
+        try {
+            addDataToView(RequestSingleton.getInstance(this).getJSONRequest(url));
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
     }
-
     private void addDataToView(JSONObject response) throws JSONException {
         String[] usernames = new String[response.length() - 2];
         for(int i=0; i < usernames.length; i++){

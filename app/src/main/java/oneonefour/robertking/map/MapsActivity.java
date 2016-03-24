@@ -83,40 +83,17 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void run() { //update function
                 //pull locations....
-                JsonObjectRequest players = new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
-                    @Override
-                    public void onResponse(JSONObject response) {
-                        try {
-                            updatePlayerArray(response);
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("LoginActivity", "Something went wrong, along the lines of " + error.getMessage());
-                    }
-                });
-                RequestSingleton.getInstance(getApplicationContext()).addToRequestQueue(players);
+                try {
+                    updatePlayerArray(RequestSingleton.getInstance(MapsActivity.this).getJSONRequest("http://86.149.141.247:8080/MapGame/get_all_locations.php"));
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
                 //push new location
                 if(currentPhoneLocation == null)return; //don't send location if it is null duh
-                final String uri = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + userName + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
-                StringRequest postLocation = new StringRequest(Request.Method.GET, uri, new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
-                        Log.d("MapsAct", response);
-                    }
-                }, new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        Log.e("MapsAct", "ERROR:" + error);
-                    }
-                });
-                RequestSingleton.getInstance(getApplicationContext()).addToRequestQueue(postLocation);
-
+                final String url = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + userName + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
+                RequestSingleton.getInstance(MapsActivity.this).stringRequest(url);
             }
-        }, 1000, 30 * 1000);
+        }, 1000, 30 * 1000);//TODO Make the run every second.
     }
 
     private synchronized void updatePlayerArray(JSONObject response) throws JSONException {
