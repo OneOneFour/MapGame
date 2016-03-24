@@ -3,19 +3,18 @@
 $response = array();
 
 //check for required fields
-if(isset($_GET['name'], $_GET['newName'])){
+if(isset($_GET['name'])){
     //trim fields from HTTP GET, store in variables 
     $name= trim($_GET['name']);
-    $newName= trim($_GET['newName']);
     
     //call db_connect class
     require 'db_connect.php';
     
 //IF statement for DML query, runs if successful 
-    if($update = $conn->query("UPDATE locations SET userName='$newName' WHERE userName='$name'")){
+    if($update = $conn->query("UPDATE locations SET hasFlag = 1 WHERE userName='$name'")){
         //successfully updated 
         $response["success"]=1;
-        $response["message"]="name updated";
+        $response["message"]="isReady updated";
         //echo JSON
         echo json_encode($response);
     } else {

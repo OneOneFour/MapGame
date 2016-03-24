@@ -4,23 +4,20 @@
 $response = array();
 
 //check for required fields
-if (isset($_GET['name'], $_GET['latitude'], $_GET['longitude'], $_GET['lobbyID'])) {
+if (isset($_GET['name'])) {
 
 //trim required fields from HTTP GET and store as variables	
-    $name = trim($_GET['name']);
-    $latitude = trim($_GET['latitude']);
-    $longitude = trim($_GET['longitude']);
-    $lobbyID = trim($_GET['lobbyID']);		
+    $name = trim($_GET['name']);	
 
 //call db_connect class 
     require 'db_connect.php';
 
 //DML Query, IF statement triggered if insertion is successful 
-    if ($insert = $conn->query("INSERT INTO locations (userName, lobbyID, latitude, longitude) 
-        VALUES ('{$name}', '{lobbyID}', '{$latitude}', '{$longitude}')")) {
+    if ($insert = $conn->query("INSERT INTO lobby (HostName) 
+        VALUES ('{$name}')")) {
         //successfully inserted
         $response["success"] = 1;
-        $response["message"] = "Location successfully created.";
+        $response["message"] = "Lobby successfully created.";
 
         //echo json response
         echo json_encode($response);
@@ -35,7 +32,7 @@ if (isset($_GET['name'], $_GET['latitude'], $_GET['longitude'], $_GET['lobbyID']
 } else {
     //required field is missing
     $response["success"] = 0;
-    $response["message"] = "required field is missing";
+    $response["message"] = "Required field is missing";
     //echo json response
     echo json_encode($response);
 }
