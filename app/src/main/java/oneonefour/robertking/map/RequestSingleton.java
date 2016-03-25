@@ -55,24 +55,6 @@ public class RequestSingleton implements Response.ErrorListener {
         },this);
         addToRequestQueue(request);
     }
-    public JSONObject getJSONRequest(String url){
-        mostRecentResponse = null;//Clears the response
-        JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, url, null, new Listener<JSONObject>() {
-            @Override
-            public void onResponse(JSONObject response) {
-                mostRecentResponse = response;
-            }
-        },this);
-        addToRequestQueue(request);
-        while(!request.hasHadResponseDelivered()){ // I don't like having to do this - just for the record
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
-        return mostRecentResponse;
-    }
 
     @Override
     public void onErrorResponse(VolleyError error) {

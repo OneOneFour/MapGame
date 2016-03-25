@@ -51,7 +51,16 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                createLobby();
+                final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName();
+                RequestSingleton.getInstance(LoginActivity.this).stringRequest(url);
+                final String findUrl = "http://86.149.141.247:8080/MapGame/get_lobby_id.php?name="+me.getName();
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, findUrl, null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        createLobby(response);
+                    }
+                    },RequestSingleton.getInstance(LoginActivity.this));
+                RequestSingleton.getInstance(LoginActivity.this).addToRequestQueue(request);
             }
         });
         swipeList = (SwipeRefreshLayout) findViewById(R.id.swipeRefresh);
@@ -63,15 +72,10 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     protected void onStart() {
         super.onStart();
     }
-    private void createLobby(){
-        final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName();
-        RequestSingleton.getInstance(this).stringRequest(url);
-        //Check whether lobby was created...
-        final String findUrl = "http://86.149.141.247:8080/MapGame/get_lobbyID.php?name="+me.getName();
-        JSONObject lobbyIDJson = RequestSingleton.getInstance(this).getJSONRequest(url);
+    private void createLobby(JSONObject response){
         int lobbyID = me.getLobbyId();
         try {
-            lobbyID = Integer.parseInt(lobbyIDJson.getJSONObject("0").getString("lobbyID"));
+            lobbyID = Integer.parseInt(response.getJSONObject("0").getString("lobbyID"));
         } catch (JSONException e) {
             e.printStackTrace();
         }
@@ -82,7 +86,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
             onJoinLobby();
         }
         else{
-            Toast.makeText(getApplicationContext(),"Lobby could not be created for some reason",Toast.LENGTH_LONG);
+            Toast.makeText(getApplicationContext(),"Lobby could not be created for some reason",Toast.LENGTH_LONG).show();
         }
     }
     @Override
@@ -131,11 +135,17 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     @Override
     public void onRefresh() {
         final String url = "http://86.149.141.247:8080/MapGame/get_all_locations.php";
-        try {
-            addDataToView(RequestSingleton.getInstance(this).getJSONRequest(url));
-        } catch (JSONException e) {
-            e.printStackTrace();
-        }
+            JsonObjectRequest requst = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
+                @Override
+                public void onResponse(JSONObject response) {
+                    try {
+                        addDataToView(response);
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }, RequestSingleton.getInstance(this));
+        RequestSingleton.getInstance(this).addToRequestQueue(requst);
     }
     private void addDataToView(JSONObject response) throws JSONException {
         String[] usernames = new String[response.length() - 2];
