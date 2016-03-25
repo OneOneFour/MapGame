@@ -83,11 +83,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void run() { //update function
                 //pull locations....
-                try {
-                    updatePlayerArray(RequestSingleton.getInstance(MapsActivity.this).getJSONRequest("http://86.149.141.247:8080/MapGame/get_all_locations.php"));
-                } catch (JSONException e) {
-                    e.printStackTrace();
-                }
+                    RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
+                        @Override
+                        public void onResponse(JSONObject response) {
+                            try {
+                                updatePlayerArray(response);
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    },RequestSingleton.getInstance(MapsActivity.this)));
                 //push new location
                 if(currentPhoneLocation == null)return; //don't send location if it is null duh
                 final String url = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + userName + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
