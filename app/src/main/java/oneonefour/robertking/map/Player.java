@@ -15,6 +15,7 @@ public class Player {
     private List<LatLng> pastLocations;
     private String name;
     private boolean isHost;
+    private boolean isReady;
     private int lobbyId;
     public Player(LatLng location,String name){
         this.location = location;
@@ -22,6 +23,12 @@ public class Player {
         pastLocations = new ArrayList<LatLng>();
         lobbyId = Integer.MAX_VALUE;
         isHost = false;
+    }
+    public Player(LatLng location,String name,int lobbyId,boolean isHost){
+        this.location = location;
+        this.name = name;
+        this.lobbyId = lobbyId;
+        this.isHost = isHost;
     }
     public boolean getIsHost(){
         return isHost;
@@ -50,4 +57,11 @@ public class Player {
         return lobbyId;
     }
 
+    public boolean isReady() {
+        return isReady;
+    }
+
+    public void setIsReady(boolean isReady) {
+        this.isReady = isReady;
+    }
 }

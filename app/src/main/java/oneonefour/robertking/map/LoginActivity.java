@@ -2,9 +2,12 @@ package oneonefour.robertking.map;
 
 import android.accounts.NetworkErrorException;
 import android.app.FragmentManager;
+import android.app.ProgressDialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Debug;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -41,6 +44,7 @@ import java.util.Map;
 public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayout.OnRefreshListener {
     private SwipeRefreshLayout swipeList;
     private static Player me;
+    private ProgressDialog dialog;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -48,10 +52,15 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         String name = saveData.getString(getString(R.string.preference_key_name),"userName");
         me = new Player(new LatLng(0,0),name);
         setContentView(R.layout.activity_login);
+        dialog = new ProgressDialog(LoginActivity.this);
+        dialog.setTitle("Please Wait");
+        dialog.setCancelable(false);
+        dialog.setIndeterminate(true);
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
+                dialog.show();
                 final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName();
                 RequestSingleton.getInstance(LoginActivity.this).stringRequest(url);
                 final String findUrl = "http://86.149.141.247:8080/MapGame/get_lobby_id.php?name="+me.getName();
@@ -71,22 +80,45 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 TextView v = (TextView) view;
-                Log.d("TextView",v.getText().toString());
-                int lobbyID = position; //TODO change this.
-                me.setLobbyID(lobbyID);
-                me.setIsHost(false);
-                final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude"+me.getCurrentLocation().longitude +"&lobbyID="+ me.getLobbyId();
+                Log.d("TextView", v.getText().toString());
+
+                dialog.show();
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_lobby_id.php?name=" + v.getText().toString(), null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            prepareToEnterLobby(response.getJSONObject("0").getInt("lobbyID"));
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                },RequestSingleton.getInstance(LoginActivity.this));
+                RequestSingleton.getInstance(LoginActivity.this).addToRequestQueue(request);
+
+
+
+
 
             }
         });
-
-
-
     }
-
+    private void prepareToEnterLobby(final int lobbyID){
+        final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude"+me.getCurrentLocation().longitude +"&lobbyID="+ lobbyID;
+        RequestSingleton.getInstance(LoginActivity.this).addToRequestQueue(new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
+            @Override
+            public void onResponse(String response) {
+                me.setIsHost(false);
+                me.setLobbyID(lobbyID);
+                dialog.dismiss();
+                onJoinLobby();
+            }
+        },RequestSingleton.getInstance(LoginActivity.this)));
+    }
     @Override
-    protected void onStart() {
-        super.onStart();
+    protected void onResume() {
+        super.onResume();
+        me.setLobbyID(Integer.MAX_VALUE);
+        me.setIsHost(false);
     }
     private void createLobby(JSONObject response){
         int lobbyID = me.getLobbyId();
@@ -95,10 +127,15 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name="+me.getName() + "&latitude="+me.getCurrentLocation().latitude + "&longitude="+me.getCurrentLocation().longitude+"&lobbyID="+lobbyID;
+        RequestSingleton.getInstance(this).stringRequest(url);
         me.setLobbyID(lobbyID);
         me.setIsHost(true);
+        Log.d("LoginActivity",Integer.toString(lobbyID));
         //
+        dialog.dismiss();
         if(lobbyID != Integer.MAX_VALUE){
+
             onJoinLobby();
         }
         else{
@@ -107,13 +144,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     }
     @Override
     protected void onDestroy() {
-        Log.d("Destroy", "Destroy the player from DB");
-        if(me.getIsHost()){
-            final String otherURL = "http://86.149.141.247:8080/MapGame/delete_lobby.php?lobbyID="+me.getLobbyId();
-            RequestSingleton.getInstance(this).stringRequest(otherURL);
-        }
-        final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name=" +me.getName();
-        RequestSingleton.getInstance(this).stringRequest(url);
+        Log.d("Destroy", "Destroy the player from DB");;
         super.onDestroy();
     }
 
@@ -159,6 +190,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
                         addDataToView(response);
                     } catch (JSONException e) {
                         e.printStackTrace();
+                        swipeList.setRefreshing(false);
                     }
                 }
             }, RequestSingleton.getInstance(this));
@@ -168,10 +200,8 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         String[] usernames = new String[response.length() - 1];
         for(int i=0; i < usernames.length; i++){
             JSONObject player = response.getJSONObject(Integer.toString(i));
-            if(player.getString("HostName").equals(me.getName())) continue;
             usernames[i] = player.getString("HostName");
         }
-
         ListAdapter adaptList = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,usernames);
         ListView listView = (ListView) findViewById(R.id.list_players);
         listView.setAdapter(adaptList);

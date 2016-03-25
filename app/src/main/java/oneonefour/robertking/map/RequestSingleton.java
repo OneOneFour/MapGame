@@ -4,6 +4,7 @@ package oneonefour.robertking.map;
 import android.content.Context;
 import android.media.MediaRouter;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.android.volley.Request;
 import com.android.volley.RequestQueue;
@@ -59,6 +60,7 @@ public class RequestSingleton implements Response.ErrorListener {
     @Override
     public void onErrorResponse(VolleyError error) {
         if(error == null) return;
+        Toast.makeText(singletonContext,"A networking error occured. Please ensure you have a network connection",Toast.LENGTH_SHORT).show();
         Log.e("MapsNetworking",error.getMessage());
     }
 }

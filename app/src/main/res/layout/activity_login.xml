@@ -2,7 +2,6 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:id = "@+id/layout_View"
-
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     tools:context="oneonefour.robertking.map.LoginActivity">
@@ -15,7 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:id = "@+id/list_players">
-
         </ListView>
 
     </android.support.v4.widget.SwipeRefreshLayout>
