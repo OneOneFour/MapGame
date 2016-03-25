@@ -13,6 +13,7 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.ListAdapter;
@@ -64,8 +65,23 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
             }
         });
         swipeList = (SwipeRefreshLayout) findViewById(R.id.swipeRefresh);
-
         swipeList.setOnRefreshListener(this);
+        ListView view = (ListView) findViewById(R.id.list_players);
+        view.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+            @Override
+            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                TextView v = (TextView) view;
+                Log.d("TextView",v.getText().toString());
+                int lobbyID = position; //TODO change this.
+                me.setLobbyID(lobbyID);
+                me.setIsHost(false);
+                final String url = "http://86.149.141.247:8080/MapGame/create_lobby.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude"+me.getCurrentLocation().longitude +"&lobbyID="+ me.getLobbyId();
+
+            }
+        });
+
+
+
     }
 
     @Override
@@ -92,7 +108,11 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     @Override
     protected void onDestroy() {
         Log.d("Destroy", "Destroy the player from DB");
-        final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name="+me.getName();
+        if(me.getIsHost()){
+            final String otherURL = "http://86.149.141.247:8080/MapGame/delete_lobby.php?lobbyID="+me.getLobbyId();
+            RequestSingleton.getInstance(this).stringRequest(otherURL);
+        }
+        final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name=" +me.getName();
         RequestSingleton.getInstance(this).stringRequest(url);
         super.onDestroy();
     }
@@ -114,9 +134,6 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     @Override
     public boolean onOptionsItemSelected(MenuItem item){
         int id = item.getItemId();
-        if(id == R.id.playbutton){
-            return true;
-        }
         if(id == R.id.editPlayer){
             new ChangeNameFragment().show(getFragmentManager(),"Change Name");
             return true;
@@ -134,7 +151,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     }
     @Override
     public void onRefresh() {
-        final String url = "http://86.149.141.247:8080/MapGame/get_all_locations.php";
+        final String url = "http://86.149.141.247:8080/MapGame/get_all_lobbies.php";
             JsonObjectRequest requst = new JsonObjectRequest(Request.Method.GET, url, null, new Response.Listener<JSONObject>() {
                 @Override
                 public void onResponse(JSONObject response) {
@@ -148,11 +165,11 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         RequestSingleton.getInstance(this).addToRequestQueue(requst);
     }
     private void addDataToView(JSONObject response) throws JSONException {
-        String[] usernames = new String[response.length() - 2];
+        String[] usernames = new String[response.length() - 1];
         for(int i=0; i < usernames.length; i++){
             JSONObject player = response.getJSONObject(Integer.toString(i));
-            if(player.getString("userName").equals(me.getName())) continue;
-            usernames[i] = player.getString("userName");
+            if(player.getString("HostName").equals(me.getName())) continue;
+            usernames[i] = player.getString("HostName");
         }
 
         ListAdapter adaptList = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,usernames);
