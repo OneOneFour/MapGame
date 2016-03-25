@@ -2,12 +2,6 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context="oneonefour.robertking.map.LoginActivity" >
-    <item
-        android:id="@+id/playbutton"
-        android:title="@string/play_buttontext"
-        android:orderInCategory="100"
-        app:showAsAction="ifRoom|withText"
-        android:icon = "@drawable/ic_play_arrow_white_24dp" />
     <item android:id="@+id/editPlayer"
         android:title="Edit"
         android:orderInCategory="90"
