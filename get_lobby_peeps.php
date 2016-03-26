@@ -11,7 +11,7 @@ if (isset($_GET['lobbyID'])) {
     $lobbyID = trim($_GET['lobbyID']);
 
 //IF statement for SQL query, runs if query returns values
-if($result = $conn->query("SELECT userName, isReady, Latitude, Longitude FROM locations WHERE lobbyID ='$lobbyID'")){
+if($result = $conn->query("SELECT userName, isReady, Latitude, Longitude,hasFlag FROM locations WHERE lobbyID ='$lobbyID'")){
     
 //stores results of the statement in array 
     while($row=$result->fetch_array(MYSQL_ASSOC)){
