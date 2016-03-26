@@ -103,7 +103,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         });
     }
     private void prepareToEnterLobby(final int lobbyID){
-        final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude"+me.getCurrentLocation().longitude +"&lobbyID="+ lobbyID;
+        final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude="+me.getCurrentLocation().longitude +"&lobbyID="+ lobbyID;
         RequestSingleton.getInstance(LoginActivity.this).addToRequestQueue(new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
             @Override
             public void onResponse(String response) {
