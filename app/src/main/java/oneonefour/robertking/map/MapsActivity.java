@@ -47,6 +47,7 @@ import java.util.TimerTask;
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private GoogleMap mMap;
     private Location currentPhoneLocation;
+    private Location currentFlagLocation;
     private GoogleApiClient apiClient;
     private HashMap<String,Marker> playToMarker;
     private String userName;
@@ -83,20 +84,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void run() { //update function
                 //pull locations....
-                    RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
-                        @Override
-                        public void onResponse(JSONObject response) {
-                            try {
-                                updatePlayerArray(response);
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
+                    @Override
+                    public void onResponse(JSONObject response) {
+                        try {
+                            updatePlayerArray(response);
+                        } catch (JSONException e) {
+                            e.printStackTrace();
                         }
-                    },RequestSingleton.getInstance(MapsActivity.this)));
+                    }
+                }, RequestSingleton.getInstance(MapsActivity.this)));
                 //push new location
-                if(currentPhoneLocation == null)return; //don't send location if it is null duh
+                if (currentPhoneLocation == null) return; //don't send location if it is null duh
                 final String url = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + userName + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
                 RequestSingleton.getInstance(MapsActivity.this).stringRequest(url);
+
+                float distanceinMeters = currentPhoneLocation.distanceTo(currentFlagLocation);
+                if (distanceinMeters <= 5){
+                    //Rob does his volley magic and updates the hasFlag booelan
+                }
             }
         }, 1000, 30 * 1000);//TODO Make the run every second.
     }
@@ -126,6 +132,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         apiClient.disconnect();
         super.onStop();
     }
+
 
     public void setLocation(Location location) {
         this.currentPhoneLocation = location;
@@ -166,13 +173,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
                 mMap.setMyLocationEnabled(true);
                 Iterator it = players.entrySet().iterator();
-                while(it.hasNext()){
-                    Map.Entry e = (Map.Entry)it.next();
+                while (it.hasNext()) {
+                    Map.Entry e = (Map.Entry) it.next();
                     Player obj = (Player) e.getValue();
-                    Log.d("MApACt",obj.getCurrentLocation().toString());
-                    if(playToMarker.get(obj.getName()) == null) {
+                    Log.d("MApACt", obj.getCurrentLocation().toString());
+                    if (playToMarker.get(obj.getName()) == null) {
                         playToMarker.put(obj.getName(), mMap.addMarker(new MarkerOptions().position(obj.getCurrentLocation()).title(obj.getName() + " is Here")));
-                    }else{
+                    } else {
                         playToMarker.get(obj.getName()).setPosition(obj.getCurrentLocation());
                     }
                 }
@@ -199,6 +206,28 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+
+    }
+
+
+    // I'm leaving this because I was proud of it
+
+    private double distance (double playerLat, double playerLong, double flagLat, double flagLong){
+        double earthRadius = 3958.75;
+
+        double dLat = Math.toRadians(Math.abs(playerLat-flagLat));
+        double dLong = Math.toRadians(Math.abs(playerLong-flagLong));
+
+        double sindLat = Math.sin(dLat / 2);
+        double sindLong = Math.sin(dLong / 2);
+
+        double temp = Math.pow(sindLat, 2) + Math.pow(sindLong, 2) * Math.cos(Math.toRadians(playerLat)) * Math.cos(Math.toRadians(flagLat));
+
+        double c = 2 * Math.atan2(Math.sqrt(temp), Math.sqrt(1-temp));
+
+        double dist = earthRadius * c;
+
+        return dist;
 
     }
 }
