@@ -88,8 +88,8 @@ public class LobbyActivity extends AppCompatActivity {
         }
         for(int i =0; i<userNames.length;i++){
             userNames[i] = players.get(i).getName();
-            if(userNames[i].equals(hostname)) userNames[i] = userNames[i].concat(" (host)");
-            if(userNames[i].equals(me.getName())) userNames[i] = userNames[i].concat(" (me)");
+            if(players.get(i).getName().equals(hostname)) userNames[i] = userNames[i].concat(" (host)");
+            if(players.get(i).getName().equals(me.getName())) userNames[i] = userNames[i].concat(" (me)");
         }
         ListAdapter adapter = new ArrayAdapter<String>(this,android.R.layout.simple_list_item_1,userNames);
         ListView listView = (ListView) findViewById(R.id.list_playersinLobby);
