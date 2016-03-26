@@ -17,7 +17,7 @@ if (isset($_GET['name'], $_GET['latitude'], $_GET['longitude'], $_GET['lobbyID']
 
 //DML Query, IF statement triggered if insertion is successful 
     if ($insert = $conn->query("INSERT INTO locations (userName, lobbyID, latitude, longitude) 
-        VALUES ('{$name}', '{lobbyID}', '{$latitude}', '{$longitude}')")) {
+        VALUES ('{$name}', '{$lobbyID}', '{$latitude}', '{$longitude}')")) {
         //successfully inserted
         $response["success"] = 1;
         $response["message"] = "Location successfully created.";
