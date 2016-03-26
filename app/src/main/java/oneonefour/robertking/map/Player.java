@@ -16,6 +16,7 @@ public class Player {
     private String name;
     private boolean isHost;
     private boolean isReady;
+    private boolean hasFlag;
     private int lobbyId;
     public Player(LatLng location,String name){
         this.location = location;
@@ -63,5 +64,13 @@ public class Player {
 
     public void setIsReady(boolean isReady) {
         this.isReady = isReady;
+    }
+
+    public boolean isHasFlag() {
+        return hasFlag;
+    }
+
+    public void setHasFlag(boolean hasFlag) {
+        this.hasFlag = hasFlag;
     }
 }

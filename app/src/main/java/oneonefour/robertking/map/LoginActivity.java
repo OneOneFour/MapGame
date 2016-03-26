@@ -37,6 +37,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.JsonObjectRequest;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
+import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.model.LatLng;
 
@@ -146,7 +147,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
                 dialog.dismiss();
                 onJoinLobby();
             }
-        }, RequestSingleton.getInstance(LoginActivity.this)));
+        },RequestSingleton.getInstance(LoginActivity.this)));
     }
     @Override
     protected void onResume() {
@@ -165,7 +166,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         RequestSingleton.getInstance(this).stringRequest(url);
         me.setLobbyID(lobbyID);
         me.setIsHost(true);
-        Log.d("LoginActivity", Integer.toString(lobbyID));
+        Log.d("LoginActivity",Integer.toString(lobbyID));
         //
         dialog.dismiss();
         if(lobbyID != Integer.MAX_VALUE){
@@ -178,7 +179,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     }
     @Override
     protected void onDestroy() {
-        Log.d("Destroy", "Destroy the player from DB");
+        Log.d("Destroy", "Destroy the player from DB");;
         super.onDestroy();
     }
 

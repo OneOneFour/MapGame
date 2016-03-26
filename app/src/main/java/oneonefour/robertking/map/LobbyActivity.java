@@ -42,6 +42,7 @@ public class LobbyActivity extends AppCompatActivity {
         me = new Player(new LatLng(0,0),name);
         me.setIsHost(isHost);
         me.setLobbyID(lobbyID);
+
         setTitle("Lobby " + lobbyID);
         dialog = new ProgressDialog(this);
         final String url = "http://86.149.141.247:8080/MapGame/get_all_lobbies.php";
@@ -54,6 +55,9 @@ public class LobbyActivity extends AppCompatActivity {
                             continue;
                         }
                         hostname = response.getJSONObject(Integer.toString(i)).getString("HostName");
+                        if(me.getName().equals(hostname)){
+                            me.setIsHost(true);
+                        }
                     } catch (JSONException e) {
                         e.printStackTrace();
                     }

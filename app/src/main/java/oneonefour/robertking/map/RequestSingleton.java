@@ -20,7 +20,7 @@ import org.json.JSONObject;
 /**
  * Created by Robert on 20/03/2016.
  */
-public class RequestSingleton implements Response.ErrorListener {
+public class RequestSingleton implements Response.ErrorListener,Listener<String> {
     private static RequestSingleton instance;
     private RequestQueue queue;
     private static Context singletonContext;
@@ -48,12 +48,7 @@ public class RequestSingleton implements Response.ErrorListener {
         return;
     }
     public void stringRequest(String url){
-        StringRequest request = new StringRequest(Request.Method.GET, url, new Listener<String>() {
-            @Override
-            public void onResponse(String response) {
-                Log.d("MapNetworking", response);
-            }
-        },this);
+        StringRequest request = new StringRequest(Request.Method.GET, url,this,this);
         addToRequestQueue(request);
     }
 
@@ -62,5 +57,10 @@ public class RequestSingleton implements Response.ErrorListener {
         if(error == null) return;
         Toast.makeText(singletonContext,"A networking error occured. Please ensure you have a network connection",Toast.LENGTH_SHORT).show();
         Log.e("MapsNetworking",error.getMessage());
+    }
+
+    @Override
+    public void onResponse(String response) {
+        Log.d("MapNetworking", response);
     }
 }

@@ -1,7 +1,9 @@
 package oneonefour.robertking.map;
 
 import android.Manifest;
+import android.app.ProgressDialog;
 import android.content.pm.PackageManager;
+import android.location.Geocoder;
 import android.location.Location;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -40,25 +42,37 @@ import java.util.Dictionary;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, LocationListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, ActivityCompat.OnRequestPermissionsResultCallback {
     private GoogleMap mMap;
+    private ProgressDialog progDia;
     private Location currentPhoneLocation;
     private Location currentFlagLocation;
     private GoogleApiClient apiClient;
     private HashMap<String,Marker> playToMarker;
     private String userName;
+    private Player me;
+
     private HashMap<String, Player> players;
     final int PERMISSION_REQUEST_OKAY = 43;
+    private boolean locationGo =false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_maps);
+
+        Bundle data = getIntent().getExtras();
+        String userName = data.getString("myName");
+        int lobbyID = data.getInt("myLobbyId");
+        boolean isHost = data.getBoolean("myIsHost");
+        me = new Player(new LatLng(0,0),userName,lobbyID,isHost);
         // Obtain the SupportMapFragment and get notified when the map is ready to be used.
         SupportMapFragment mapFragment = (SupportMapFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.map);
@@ -72,6 +86,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         apiClient = new GoogleApiClient.Builder(this).addConnectionCallbacks(this).addOnConnectionFailedListener(this).addApi(LocationServices.API).addApi(AppIndex.API).build();
         players = new HashMap<String, Player>();
         playToMarker = new HashMap<String,Marker>();
+        progDia = new ProgressDialog(this);
     }
 
     @Override
@@ -84,7 +99,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void run() { //update function
                 //pull locations....
-                RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_all_locations.php", null, new Response.Listener<JSONObject>() {
+
+                JsonObjectRequest request = new JsonObjectRequest(Request.Method.GET, "http://86.149.141.247:8080/MapGame/get_lobby_peeps.php?lobbyID=" + me.getLobbyId(), null, new Response.Listener<JSONObject>() {
                     @Override
                     public void onResponse(JSONObject response) {
                         try {
@@ -93,37 +109,141 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             e.printStackTrace();
                         }
                     }
-                }, RequestSingleton.getInstance(MapsActivity.this)));
+                }, RequestSingleton.getInstance(MapsActivity.this));
+                RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(request);
                 //push new location
                 if (currentPhoneLocation == null) return; //don't send location if it is null duh
-                final String url = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + userName + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
-                RequestSingleton.getInstance(MapsActivity.this).stringRequest(url);
+                final String url = "http://86.149.141.247:8080/MapGame/update_location.php?name=" + me.getName() + "&latitude=" + currentPhoneLocation.getLatitude() + "&longitude=" + currentPhoneLocation.getLongitude();
+                StringRequest sr = new StringRequest(Request.Method.GET, url, RequestSingleton.getInstance(MapsActivity.this),RequestSingleton.getInstance(MapsActivity.this));
+                RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(sr);
 
+
+
+
+                //check if flag location is null, if so spawn a flag
+                //time for more threading.
+
+                if(MapsActivity.this.currentFlagLocation == null){
+                    MapsActivity.this.runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            MapsActivity.this.progDia.setTitle("Please Wait");
+                            MapsActivity.this.progDia.setMessage("Starting game");
+                            MapsActivity.this.progDia.setCancelable(false);
+                            MapsActivity.this.progDia.setIndeterminate(true);
+                            MapsActivity.this.progDia.show();
+                        }
+                    });
+                    while (!sr.hasHadResponseDelivered()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(request);
+                    while (!request.hasHadResponseDelivered()) {
+                        try {
+                            Thread.sleep(100);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                    if(MapsActivity.this.me.getIsHost()){
+                        double[] lats = new double[players.size()];
+                        double[] longs = new double[players.size()];
+                        Iterator it = players.entrySet().iterator();
+                        int i =0;
+                        while(it.hasNext()){
+                            Player p = (Player) ((Map.Entry) it.next()).getValue();
+                            lats[i] = p.getCurrentLocation().latitude;
+                            longs[i] = p.getCurrentLocation().longitude;
+                            i++;
+                        }
+
+                        double avLats = getAverage(lats);
+                        double avlongs = getAverage(longs);
+                        Random numb = new Random();
+                        //Perform Lookup
+                        avLats += randomDouble(numb,-1/70.0,1/70.0); //allows flag to jitter by up to a mile
+                        avlongs += randomDouble(numb,-1/70.0,1/70.0);
+
+                        currentFlagLocation = new Location("Flag"+me.getLobbyId());
+                        currentFlagLocation.setLatitude(avLats);
+                        currentFlagLocation.setLongitude(avlongs);
+                        Log.d("MapsAct", "LONG:" + avlongs+" LAT:" +avLats);
+                        final String newURL = "http://86.149.141.247:8080/MapGame/create_location.php?name=Flag"+me.getLobbyId()+"&latitude="+currentFlagLocation.getLatitude()+"&longitude="+currentFlagLocation.getLongitude()+"&lobbyID="+me.getLobbyId();
+                        RequestSingleton.getInstance(MapsActivity.this).stringRequest(newURL);
+
+                    }else{
+                        //wait for flag to return positive
+                        while(currentFlagLocation == null){
+                            RequestSingleton.getInstance(MapsActivity.this).addToRequestQueue(request);
+                            while(!request.hasHadResponseDelivered()){
+                                try {
+                                    Thread.sleep(100);
+                                } catch (InterruptedException e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                    }
+                    MapsActivity.this.progDia.dismiss();
+                }
                 float distanceinMeters = currentPhoneLocation.distanceTo(currentFlagLocation);
-                if (distanceinMeters <= 5){
-                    //Rob does his volley magic and updates the hasFlag booelan
+                if (distanceinMeters <= 5) {
+                    //Rob does his volley magic and updates the hasFlag boolean
                 }
             }
-        }, 1000, 30 * 1000);//TODO Make the run every second.
+            private synchronized double getAverage(double[] array){
+                if(array.length == 0) return 0;
+                double sum =  0;
+                for(double num:array){
+                    sum+=num;
+                }
+                return sum/array.length;
+            }
+            private double randomDouble(Random random,double max,double min){
+                double range = max- min;
+                return min + range*random.nextDouble();
+            }
+        }, 1000, 1000);
     }
-
     private synchronized void updatePlayerArray(JSONObject response) throws JSONException {
         for (int i = 0; i < response.length()-1; i++) {
             JSONObject playerObject = response.getJSONObject(Integer.toString(i));
             String userName = playerObject.getString("userName");
             if (userName.equals(this.userName)) continue;
-            Double lat = Double.parseDouble(playerObject.getString("latitude"));
-            Double longd = Double.parseDouble(playerObject.getString("longitude"));
+
+            Double lat = Double.parseDouble(playerObject.getString("Latitude"));
+            Double longd = Double.parseDouble(playerObject.getString("Longitude"));
+
             LatLng location = new LatLng(lat, longd);
+            //boolean hasFlag = (playerObject.getString("hasFlag").equals("1"));
+            //if(hasFlag){
+            //    currentFlagLocation.setLatitude(lat);
+            //    currentFlagLocation.setLongitude(longd);
+            //}
+            if(userName.equals("Flag" + me.getLobbyId())){
+                if(currentFlagLocation == null) {
+                    currentFlagLocation = new Location("Flag" + me.getLobbyId());
+                }
+                currentFlagLocation.setLongitude(longd);
+                currentFlagLocation.setLatitude(lat);
+
+            }
             if (players.containsKey(userName) && players.get(userName) != null) {
                 players.get(userName).updateLocation(location);
+                //players.get(userName).setHasFlag(hasFlag);
             } else {
-                players.put(userName, new Player(location, userName));
+                Player p = new Player(location,userName);
+                p.setLobbyID(me.getLobbyId());
+                //p.setHasFlag(hasFlag);
+                players.put(userName,p);
             }
         }
         updateMap();
     }
-
     @Override
     protected void onStop() {
         RequestSingleton.getInstance(this).getRequestQueue().stop();
@@ -132,17 +252,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         apiClient.disconnect();
         super.onStop();
     }
-
-
     public void setLocation(Location location) {
+
         this.currentPhoneLocation = location;
     }
-
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;//setup map
     }
-
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         switch (requestCode) {
@@ -160,6 +277,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onLocationChanged(Location location) {
+
         this.currentPhoneLocation = location;
     }
 
@@ -203,14 +321,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onConnectionSuspended(int i) {
 
     }
-
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
     }
 
-
-    // I'm leaving this because I was proud of it but it is useless
+    // I'm leaving this because I was proud of it but it is useless - I believe in you Ross
 
     private double distance (double playerLat, double playerLong, double flagLat, double flagLong){
         double earthRadius = 3958.75;
@@ -229,5 +345,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
         return dist;
 
+    }
+
+    public void setCurrentFlagLocation(Location currentFlagLocation) {
+        this.currentFlagLocation = currentFlagLocation;
     }
 }
