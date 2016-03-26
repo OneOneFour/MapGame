@@ -7,8 +7,13 @@ import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Debug;
+import android.os.Handler;
+import android.support.design.widget.CoordinatorLayout;
 import android.support.design.widget.FloatingActionButton;
+import android.support.design.widget.Snackbar;
 import android.support.v4.widget.SwipeRefreshLayout;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -45,6 +50,8 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     private SwipeRefreshLayout swipeList;
     private static Player me;
     private ProgressDialog dialog;
+    private int mInterval = 10000;
+    private Handler mHandler;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,6 +63,8 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         dialog.setTitle("Please Wait");
         dialog.setCancelable(false);
         dialog.setIndeterminate(true);
+        mHandler = new Handler();
+        startRepeatingTask();
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -102,6 +111,31 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
             }
         });
     }
+    Runnable internetStatusChecker = new Runnable() {
+        @Override
+        public void run() {
+            try {
+                final ConnectivityManager conmGr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
+                final NetworkInfo activeNetwork = conmGr.getActiveNetworkInfo();
+                if (activeNetwork != null && activeNetwork.isConnected()){
+
+                }else {
+                    Toast toast = Toast.makeText(getApplicationContext(), "No Internet Connection", Toast.LENGTH_LONG);
+                    toast.show();
+                }
+
+            } finally {
+                mHandler.postDelayed(internetStatusChecker, mInterval);
+            }
+
+        }
+    };
+    void startRepeatingTask(){
+        internetStatusChecker.run();
+    }
+    void stopRepeatingTask(){
+        mHandler.removeCallbacks(internetStatusChecker);
+    }
     private void prepareToEnterLobby(final int lobbyID){
         final String url = "http://86.149.141.247:8080/MapGame/create_location.php?name="+me.getName()+ "&latitude="+me.getCurrentLocation().latitude + "&longitude="+me.getCurrentLocation().longitude +"&lobbyID="+ lobbyID;
         RequestSingleton.getInstance(LoginActivity.this).addToRequestQueue(new StringRequest(Request.Method.GET, url, new Response.Listener<String>() {
@@ -112,7 +146,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
                 dialog.dismiss();
                 onJoinLobby();
             }
-        },RequestSingleton.getInstance(LoginActivity.this)));
+        }, RequestSingleton.getInstance(LoginActivity.this)));
     }
     @Override
     protected void onResume() {
@@ -131,7 +165,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
         RequestSingleton.getInstance(this).stringRequest(url);
         me.setLobbyID(lobbyID);
         me.setIsHost(true);
-        Log.d("LoginActivity",Integer.toString(lobbyID));
+        Log.d("LoginActivity", Integer.toString(lobbyID));
         //
         dialog.dismiss();
         if(lobbyID != Integer.MAX_VALUE){
@@ -144,7 +178,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
     }
     @Override
     protected void onDestroy() {
-        Log.d("Destroy", "Destroy the player from DB");;
+        Log.d("Destroy", "Destroy the player from DB");
         super.onDestroy();
     }
 
