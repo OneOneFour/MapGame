@@ -118,7 +118,7 @@ public class LoginActivity extends AppCompatActivity implements SwipeRefreshLayo
                 final ConnectivityManager conmGr = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
                 final NetworkInfo activeNetwork = conmGr.getActiveNetworkInfo();
                 if (activeNetwork != null && activeNetwork.isConnected()){
-
+                    //all is well
                 }else {
                     Toast toast = Toast.makeText(getApplicationContext(), "No Internet Connection", Toast.LENGTH_LONG);
                     toast.show();
