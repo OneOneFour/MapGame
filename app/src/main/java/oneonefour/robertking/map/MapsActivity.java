@@ -210,7 +210,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     }
 
 
-    // I'm leaving this because I was proud of it
+    // I'm leaving this because I was proud of it but it is useless
 
     private double distance (double playerLat, double playerLong, double flagLat, double flagLong){
         double earthRadius = 3958.75;
