@@ -69,7 +69,12 @@ public class LobbyActivity extends AppCompatActivity {
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
             public void onRefresh() {
-                startRefresh();
+                new Thread(new Runnable() {
+                    @Override
+                    public void run() {
+                        startRefresh();
+                    }
+                }).start();
             }
         });
     }
@@ -92,7 +97,6 @@ public class LobbyActivity extends AppCompatActivity {
         });
         final String url = "http://86.149.141.247:8080/MapGame/update_isReady.php?name="+me.getName();
         RequestSingleton.getInstance(this).stringRequest(url);
-
         Thread loopThread = new Thread(new Runnable() { //WORKING MULTI-THREADING :-D #efficency #opti
             @Override
             public void run() {
@@ -164,7 +168,12 @@ public class LobbyActivity extends AppCompatActivity {
     protected void onStart() {
         super.onStart();
         swipeRefreshLayout.setRefreshing(true);
-        startRefresh();
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                startRefresh();
+            }
+        }).start();
 
     }
     private synchronized void updatePlayerArray(JSONObject response) throws JSONException {
@@ -188,21 +197,21 @@ public class LobbyActivity extends AppCompatActivity {
         listView.setAdapter(adapter);
         swipeRefreshLayout.setRefreshing(false);
     }
-    @Override
-    public void onBackPressed() {
+     @Override
+    protected void onDestroy() {
         if(me.getIsHost()){
             if(players.size() == 1 ) {
                 final String url = "http://86.149.141.247:8080/MapGame/delete_lobby.php?lobbyID=" + me.getLobbyId();
                 RequestSingleton.getInstance(this).stringRequest(url);
             }else{
                 //Reassaign host
-                hostname = players.get(1).getName();
+                hostname = players.get(players.size()-2).getName();
                 final String url = "http://86.149.141.247:8080/MapGame/reassign_host.php?name="+me.getName()+"&newname="+hostname;
                 RequestSingleton.getInstance(this).stringRequest(url);
             }
         }
         final String altUrl = "http://86.149.141.247:8080/MapGame/delete_location.php?name="+me.getName();
         RequestSingleton.getInstance(this).stringRequest(altUrl);
-        super.onBackPressed();
+        super.onDestroy();
     }
 }
