@@ -37,6 +37,9 @@ import com.google.android.gms.maps.model.MarkerOptions;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Dictionary;
 import java.util.HashMap;
@@ -57,7 +60,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     private HashMap<String,Marker> playToMarker;
     private String userName;
     private Player me;
-
+    private double lookupLat;
+    private double lookupLong;
     private HashMap<String, Player> players;
     final int PERMISSION_REQUEST_OKAY = 43;
     private boolean locationGo =false;
@@ -167,7 +171,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         //Perform Lookup
                         avLats += randomDouble(numb,-1/70.0,1/70.0); //allows flag to jitter by up to a mile
                         avlongs += randomDouble(numb,-1/70.0,1/70.0);
-
+                        lookupLat = avLats;
+                        lookupLong = avlongs;
                         currentFlagLocation = new Location("Flag"+me.getLobbyId());
                         currentFlagLocation.setLatitude(avLats);
                         currentFlagLocation.setLongitude(avlongs);
@@ -347,6 +352,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    //More Ross Stuff
+    //Function returns location to nearest road. pretty cool right
+    public Location getRoadLocation () {
+        String toPassLat = String.valueOf(lookupLat);
+        String toPassLong = String.valueOf(lookupLong);
+        String morePassin = "";
+        try {
+             morePassin = (URLEncoder.encode(toPassLat, "UTF-8") + URLEncoder.encode(toPassLong, "UTF-8"));
+        } catch (UnsupportedEncodingException uee){}
+
+        String nrstRoadLookUp = "https://maps.googleapis.com/maps/api/directions/json?origin=" +
+                morePassin +"&destination="+ morePassin + "&key=AIzaSyAoc3VYDTdgyQ9azplbsy6nhgMOCEUIySo";
+
+        // Rob does some Volley magic and gets the JSON response, then gets the latitude and longitude from that response
+        Location newFlag = new Location("FlagShitYeah");
+        newFlag.setLatitude(0);// latitude from JSON repsonse
+        newFlag.setLongitude(0);// longitude from JSON response
+        return newFlag;
+    }
     public void setCurrentFlagLocation(Location currentFlagLocation) {
         this.currentFlagLocation = currentFlagLocation;
     }
