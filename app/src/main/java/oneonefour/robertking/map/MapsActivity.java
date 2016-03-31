@@ -145,7 +145,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     }
                     manager.notify(id,builder.build());
                 }
-
                 //check if flag location is null, if so spawn a flag
                 //time for more threading.
 
@@ -350,8 +349,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onDestroy() {
-        final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name=Flag"+me.getLobbyId();
-        RequestSingleton.getInstance(this).stringRequest(url);
+        if(players.size() == 1){
+            final String url = "http://86.149.141.247:8080/MapGame/delete_location.php?name=Flag"+me.getLobbyId();
+            RequestSingleton.getInstance(this).stringRequest(url);
+        }
         final String otherURL = "http://86.149.141.247:8080/MapGame/update_isReady.php?name="+me.getName();
         RequestSingleton.getInstance(this).stringRequest(otherURL);
 

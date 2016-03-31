@@ -19,14 +19,15 @@ public class Player {
     private boolean hasFlag;
     private int lobbyId;
     public Player(LatLng location,String name){
-        this.location = location;
-        this.name = name;
         pastLocations = new ArrayList<LatLng>();
+        this.name= name;
+        updateLocation(location);
         lobbyId = Integer.MAX_VALUE;
         isHost = false;
     }
     public Player(LatLng location,String name,int lobbyId,boolean isHost){
-        this.location = location;
+        pastLocations = new ArrayList<LatLng>();
+        updateLocation(location);
         this.name = name;
         this.lobbyId = lobbyId;
         this.isHost = isHost;
@@ -42,7 +43,7 @@ public class Player {
     }
     public void setName(String name){this.name = name;}
     public void updateLocation(LatLng newlocation){
-        pastLocations.add(location);
+        pastLocations.add(newlocation);
         this.location = newlocation;
     }
     public List<LatLng> getPastLocations(){
